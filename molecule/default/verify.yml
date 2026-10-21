@@ -1,0 +1,65 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    # --- Rendered configuration file ---
+    - name: Get rendered telemt config facts
+      ansible.builtin.stat:
+        path: /etc/telemt/telemt.toml
+      register: telemt_config_stat
+
+    - name: Assert telemt config file exists and is non-empty
+      ansible.builtin.assert:
+        that:
+          - telemt_config_stat.stat.exists
+          - telemt_config_stat.stat.size | int > 0
+        fail_msg: Rendered telemt config is missing or empty
+
+    - name: Read rendered telemt config
+      ansible.builtin.slurp:
+        src: /etc/telemt/telemt.toml
+      register: telemt_config_content
+      when: telemt_config_stat.stat.exists
+
+    - name: Decode rendered telemt config text
+      ansible.builtin.set_fact:
+        telemt_config_text: "{{ telemt_config_content.content | b64decode }}"
+      when: telemt_config_stat.stat.exists
+
+    - name: Assert config renders expected key settings
+      ansible.builtin.assert:
+        that:
+          - "'[server]' in telemt_config_text"
+          - "'port = 443' in telemt_config_text"
+          - "'[access.users]' in telemt_config_text"
+        fail_msg: Rendered config lacks expected [server]/port/access sections
+      when: telemt_config_stat.stat.exists
+
+    # --- Docker resources ---
+    - name: Get telemt config docker volume info
+      community.docker.docker_volume_info:
+        name: telemt-config
+      register: telemt_volume_info
+
+    - name: Assert telemt config docker volume exists
+      ansible.builtin.assert:
+        that:
+          - telemt_volume_info.exists
+        fail_msg: Docker volume 'telemt-config' was not created
+
+    - name: Get telemt docker container info
+      community.docker.docker_container_info:
+        name: telemt
+      register: telemt_container_info
+
+    - name: Assert telemt docker container is running
+      ansible.builtin.assert:
+        that:
+          - telemt_container_info.exists
+          - telemt_container_info.container is defined
+          - telemt_container_info.container.State is defined
+          - telemt_container_info.container.State.Running is defined
+          - telemt_container_info.container.State.Running
+        fail_msg: Docker container 'telemt' is missing or not running

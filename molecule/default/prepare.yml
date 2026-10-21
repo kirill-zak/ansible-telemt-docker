@@ -1,0 +1,20 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    - name: Install docker CLI and pip in the instance
+      community.general.apk:
+        name:
+          - docker-cli
+          - py3-pip
+        state: present
+        update_cache: true
+
+    - name: Install Python libraries required by community.docker modules
+      ansible.builtin.pip:
+        name:
+          - requests
+          - docker
+        state: present
+        break_system_packages: true
