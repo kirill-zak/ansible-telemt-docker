@@ -1,0 +1,83 @@
+### Telemt Based Config.toml
+# Rendered by the telemt-docker Ansible role from defaults/main.yml
+# https://github.com/telemt/telemt/blob/main/config.toml
+
+# === General Settings ===
+[general]
+use_middle_proxy = {{ telemt_use_middle_proxy | lower }}
+{% if telemt_ad_tag is defined and telemt_ad_tag %}
+ad_tag = "{{ telemt_ad_tag }}"
+{% endif %}
+{% if telemt_access_user_ad_tags is defined and telemt_access_user_ad_tags %}
+# Per-user ad_tag in [access.user_ad_tags] (32 hex from @MTProxybot)
+{% endif %}
+
+# === Log Level ===
+log_level = "{{ telemt_log_level }}"
+
+[general.modes]
+classic = {{ telemt_mode_classic | lower }}
+secure = {{ telemt_mode_secure | lower }}
+tls = {{ telemt_mode_tls | lower }}
+
+[general.links]
+show = {{ telemt_links_show | to_json }}
+{% if telemt_links_public_host %}
+public_host = "{{ telemt_links_public_host }}"
+{% endif %}
+{% if telemt_links_public_port %}
+public_port = {{ telemt_links_public_port }}
+{% endif %}
+
+# === Server Binding ===
+[server]
+port = {{ telemt_server_port }}
+{% if telemt_server_proxy_protocol %}
+proxy_protocol = true
+{% else %}
+# proxy_protocol = false  # Enable if behind HAProxy/nginx with PROXY protocol
+{% endif %}
+{% if telemt_server_metrics_listen %}
+metrics_listen = "{{ telemt_server_metrics_listen }}"
+{% elif telemt_server_metrics_port is defined and telemt_server_metrics_port %}
+metrics_port = {{ telemt_server_metrics_port }}
+{% endif %}
+{% if telemt_server_metrics_whitelist | length > 0 %}
+metrics_whitelist = {{ telemt_server_metrics_whitelist | to_json }}
+{% endif %}
+
+[server.api]
+enabled = {{ telemt_api_enabled | lower }}
+listen = "{{ telemt_api_listen }}"
+whitelist = {{ telemt_api_whitelist | to_json }}
+minimal_runtime_enabled = {{ telemt_api_minimal_runtime_enabled | lower }}
+minimal_runtime_cache_ttl_ms = {{ telemt_api_minimal_runtime_cache_ttl_ms }}
+
+# Listen on multiple interfaces/IPs - IPv4
+{% for listener in telemt_listeners %}
+[[server.listeners]]
+ip = "{{ listener.ip }}"
+{% endfor %}
+
+# === Anti-Censorship & Masking ===
+[censorship]
+tls_domain = "{{ telemt_tls_domain }}"
+mask = {{ telemt_mask | lower }}
+tls_emulation = {{ telemt_tls_emulation | lower }}
+tls_front_dir = "{{ telemt_tls_front_dir }}"
+
+[access.users]
+{% if telemt_access_users is defined and telemt_access_users %}
+{% for username, secret in telemt_access_users.items() %}
+{{ username }} = "{{ secret }}"
+{% endfor %}
+{% else %}
+# format: "username" = "32_hex_chars_secret"
+{% endif %}
+
+{% if telemt_access_user_ad_tags is defined and telemt_access_user_ad_tags %}
+[access.user_ad_tags]
+{% for username, ad_tag in telemt_access_user_ad_tags.items() %}
+{{ username }} = "{{ ad_tag }}"
+{% endfor %}
+{% endif %}

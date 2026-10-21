@@ -1,0 +1,48 @@
+---
+# Both tasks listen on the shared topic "Reload telemt config", which the
+# render task notifies when the generated config changes. Ansible does not
+# support notify-ing a top-level block handler, so each step is its own task.
+- name: Copy config into telemt config volume
+  listen:
+    - Reload telemt config
+  community.docker.docker_container:
+    name: "telemt-config-copy"
+    image: "alpine:3"
+    state: present
+    command: ["sh", "-c", "cp /mnt/config/telemt.toml /config/telemt.toml"]
+    volumes:
+      - "{{ telemt_config_volume }}:/config"
+      - "{{ telemt_config_path }}:/mnt/config/telemt.toml:ro"
+    recreate: true
+    detach: false
+    auto_remove: true
+
+- name: Recreate telemt docker container
+  listen:
+    - Reload telemt config
+  community.docker.docker_container:
+    name: "{{ telemt_container_name }}"
+    image: "{{ telemt_image }}:{{ telemt_image_version }}"
+    state: started
+    restart_policy: "{{ telemt_container_restart_policy }}"
+    command: "{{ telemt_container_command }}"
+    recreate: true
+    pull: true
+    volumes:
+      - "{{ telemt_config_volume }}:/etc/telemt"
+    ports: "{{ telemt_published_ports if telemt_network_mode != 'host' else omit }}"
+    network_mode: "{{ telemt_network_mode }}"
+    env:
+      RUST_LOG: "{{ telemt_log_level }}"
+    user: "{{ telemt_container_user if telemt_container_user else omit }}"
+    security_opts: "{{ telemt_security_opts }}"
+    cap_drop: "{{ telemt_cap_drop }}"
+    capabilities: "{{ telemt_cap_add }}"
+    read_only: "{{ telemt_read_only }}"
+    tmpfs: "{{ telemt_tmpfs }}"
+    cpus: "{{ telemt_resource_limits_cpus if telemt_resource_limits_cpus else omit }}"
+    memory: "{{ telemt_resource_limits_memory if telemt_resource_limits_memory else omit }}"
+    memory_reservation: "{{ telemt_resource_reservations_memory if telemt_resource_reservations_memory else omit }}"
+    ulimits: "{{ telemt_ulimits }}"
+    log_driver: "{{ telemt_log_driver }}"
+    log_options: "{{ telemt_log_options }}"

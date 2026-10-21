@@ -1,0 +1,126 @@
+---
+# === General Settings ===
+# Enable proxy for intermediate/upstream proxy when e.g. hiding traffic
+telemt_use_middle_proxy: true
+# Global ad_tag fallback when a user has no per-user tag in telemt_access_user_ad_tags
+# telemt_ad_tag: ""
+# Log level: debug | verbose | normal | silent
+telemt_log_level: "normal"
+
+# === Modes ===
+telemt_mode_classic: false
+telemt_mode_secure: false
+telemt_mode_tls: true
+
+# === Links ===
+# Show links for selected users; "*" means all users.
+# Accepts a string or a list of usernames, e.g. ["alice", "bob"]
+telemt_links_show: "*"
+# Host (IP or domain) used for tg:// links, empty disables override
+telemt_links_public_host: ""
+# Port used for tg:// links (defaults to server.port)
+telemt_links_public_port: ""
+
+# === Server Binding ===
+telemt_server_port: 443
+# Enable PROXY protocol only if running behind HAProxy/nginx
+telemt_server_proxy_protocol: false
+# Dedicated metrics gathering port (0 disables standalone metrics listener)
+telemt_server_metrics_port: 9090
+# Optional listen address for metrics; overrides metrics_port if set
+telemt_server_metrics_listen: ""
+# Optional IP whitelist for metrics access, e.g. ["127.0.0.1/32"]
+telemt_server_metrics_whitelist: []
+
+# === Server API ===
+telemt_api_enabled: true
+telemt_api_listen: "127.0.0.1:9091"
+telemt_api_whitelist:
+  - "127.0.0.1/32"
+  - "::1/128"
+# Run without full runtime state, useful for simple setups
+telemt_api_minimal_runtime_enabled: false
+# TTL of the minimal runtime cache in milliseconds
+telemt_api_minimal_runtime_cache_ttl_ms: 1000
+
+# === Listeners (IPv4/IPv6) ===
+# Addresses the proxy binds to; one entry per [[server.listeners]] block
+telemt_listeners:
+  - ip: "0.0.0.0"
+
+# === Censorship & Masking ===
+# Fake-TLS / SNI masking domain used in generated ee-links.
+# Changing tls_domain invalidates previously generated TLS links.
+telemt_tls_domain: "petrovich.ru"
+# Mask traffic to look like normal web traffic
+telemt_mask: true
+# Fetch real cert lengths and emulate TLS records
+telemt_tls_emulation: true
+# Cache directory for TLS emulation
+telemt_tls_front_dir: "tlsfront"
+
+# === Access Users ===
+# Format: "username" = "32_hex_chars_secret"
+# Each entry maps to a config entry in [access.users]
+# telemt_access_users:
+#   hello: "00000000000000000000000000000000"
+
+# === Per-user ad tags ===
+# Format: "username" = "32_hex_chars_ad_tag"
+# Each entry maps to a config entry in [access.user_ad_tags]
+# telemt_access_user_ad_tags: {}
+
+# === Path to the generated configuration file on the target host ===
+# (used by the template task; overridable in vars)
+telemt_config_path: "/etc/telemt/telemt.toml"
+
+# === Docker container settings ===
+# Image and tag of the telemt docker image; version/tag is user-overridable
+telemt_image: "whn0thacked/telemt-docker"
+# Image version/tag, defaults to latest
+telemt_image_version: "latest"
+# Name of the Docker volume that persists the generated config.toml
+telemt_config_volume: "telemt-config"
+# Name of the running telemt container
+telemt_container_name: "telemt"
+# Restart policy for the telemt container
+telemt_container_restart_policy: "unless-stopped"
+# Path to the config file inside the container, passed as argument to the entrypoint
+telemt_container_config_path: "/etc/telemt/telemt.toml"
+# Command the container runs on start; points telemt at the config file by default
+telemt_container_command:
+  - "{{ telemt_container_config_path }}"
+# Run the container using the host network stack; ports are controlled by the config
+telemt_network_mode: "host"
+# Published ports (only used when telemt_network_mode is not "host")
+telemt_published_ports:
+  - "443:443/tcp"
+# Run as root to allow binding privileged ports (<1024) such as 443
+telemt_container_user: ""
+# Extra security options; no-new-privileges prevents privilege escalation
+telemt_security_opts:
+  - "no-new-privileges:true"
+# Capabilities dropped from the container
+telemt_cap_drop:
+  - "ALL"
+# Capabilities added back (NET_BIND_SERVICE allows binding ports <1024 as non-root)
+telemt_cap_add:
+  - "NET_BIND_SERVICE"
+# Run the container root filesystem as read-only
+telemt_read_only: true
+# Tmpfs mounts to write temporary files in a read-only root filesystem
+telemt_tmpfs:
+  - "/tmp:rw,nosuid,nodev,noexec,size=16m"
+# CPU (0.50 = half a core) and memory limits for the container, optional
+telemt_resource_limits_cpus: "0.50"
+telemt_resource_limits_memory: "256M"
+# Reserved memory guarantee for the container, optional
+telemt_resource_reservations_memory: "128M"
+# File descriptor soft/hard limits, critical for high-load servers
+telemt_ulimits:
+  - "nofile:65536:65536"
+# Logging driver and options
+telemt_log_driver: "json-file"
+telemt_log_options:
+  max-size: "10m"
+  max-file: "3"
