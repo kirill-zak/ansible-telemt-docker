@@ -1,0 +1,50 @@
+---
+# Create a Docker volume to persist the telemt configuration file
+- name: Create telemt config docker volume
+  community.docker.docker_volume:
+    name: "{{ telemt_config_volume }}"
+    state: present
+
+# Render the telemt.toml template and notify the handler to reload telemt
+- name: Ensure telemt config directory exists
+  ansible.builtin.file:
+    path: "{{ telemt_config_path | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Render telemt config file
+  ansible.builtin.template:
+    src: telemt.toml.j2
+    dest: "{{ telemt_config_path }}"
+    mode: "0644"
+  notify: Reload telemt config
+
+# Run the telemt container using the config docker volume.
+# The volume holds the generated config, mounted writable at /etc/telemt so the
+# API can save configuration changes (atomic writes require directory access).
+- name: Run telemt docker container
+  community.docker.docker_container:
+    name: "{{ telemt_container_name }}"
+    image: "{{ telemt_image }}:{{ telemt_image_version }}"
+    state: started
+    restart_policy: "{{ telemt_container_restart_policy }}"
+    command: "{{ telemt_container_command }}"
+    pull: true
+    volumes:
+      - "{{ telemt_config_volume }}:/etc/telemt"
+    ports: "{{ telemt_published_ports if telemt_network_mode != 'host' else omit }}"
+    network_mode: "{{ telemt_network_mode }}"
+    env:
+      RUST_LOG: "{{ telemt_log_level }}"
+    user: "{{ telemt_container_user if telemt_container_user else omit }}"
+    security_opts: "{{ telemt_security_opts }}"
+    cap_drop: "{{ telemt_cap_drop }}"
+    capabilities: "{{ telemt_cap_add }}"
+    read_only: "{{ telemt_read_only }}"
+    tmpfs: "{{ telemt_tmpfs }}"
+    cpus: "{{ telemt_resource_limits_cpus if telemt_resource_limits_cpus else omit }}"
+    memory: "{{ telemt_resource_limits_memory if telemt_resource_limits_memory else omit }}"
+    memory_reservation: "{{ telemt_resource_reservations_memory if telemt_resource_reservations_memory else omit }}"
+    ulimits: "{{ telemt_ulimits }}"
+    log_driver: "{{ telemt_log_driver }}"
+    log_options: "{{ telemt_log_options }}"

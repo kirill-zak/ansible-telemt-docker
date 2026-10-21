@@ -1,0 +1,31 @@
+---
+galaxy_info:
+  author: kirill_zak
+  role_name: ansible_telemt_docker
+  description: >-
+    Deploy the TelemT MTProto proxy for Telegram as a hardened Docker container
+  company: https://kirill-zak.ru
+  license: MIT
+  min_ansible_version: '2.12'
+  platforms:
+    - name: Debian
+      versions:
+        - buster
+        - bullseye
+    - name: EL
+      versions:
+        - "8"
+    - name: Fedora
+      versions:
+        - "35"
+        - "36"
+    - name: Ubuntu
+      versions:
+        - bionic
+        - focal
+        - jammy
+  galaxy_tags:
+    - docker
+    - proxy
+
+dependencies: []
