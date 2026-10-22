@@ -86,21 +86,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-almalinux-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -145,21 +135,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-alpine-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -204,21 +184,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-alpine-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -263,21 +233,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-debian-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -322,21 +282,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-fedora-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -381,21 +331,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-rockylinux-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
@@ -440,21 +380,11 @@ jobs:
           fi
           sudo systemctl start podman.socket
 
-          # The runner user is unprivileged. The podman driver creates the
-          # instance container via sudo (rootful), but the podman connection
-          # plugin runs as the runner user and would otherwise fall back to
-          # rootless podman, which cannot see the rootful container (UNREACHABLE,
-          # ansible-playbook exit code 4). Open the rootful socket to the runner
-          # user and point the podman CLI at it so provisioning and the
-          # connection share the same engine.
-          sudo chmod 0666 /run/podman/podman.sock
-          echo "CONTAINER_HOST=unix:///run/podman/podman.sock" >> "$GITHUB_ENV"
-
       - name: Install ansible dependencies
         run: ansible-galaxy collection install -r requirements.yml
 
       - name: Run Molecule tests
-        run: molecule test
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
         env:
           MOLECULE_DISTR: kirillzak/docker-ubuntu-ansible
           MOLECULE_TAG: ${{ matrix.tag }}
