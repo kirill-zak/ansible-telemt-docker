@@ -74,12 +74,12 @@ telemt_tls_front_dir: "tlsfront"
 # (used by the template task; overridable in vars)
 telemt_config_path: "/etc/telemt/telemt.toml"
 
-# === Docker container settings ===
-# Image and tag of the telemt docker image; version/tag is user-overridable
+# === Podman container settings ===
+# Image and tag of the telemt container image; version/tag is user-overridable
 telemt_image: "whn0thacked/telemt-docker"
 # Image version/tag, defaults to latest
 telemt_image_version: "latest"
-# Name of the Docker volume that persists the generated config.toml
+# Name of the Podman volume that persists the generated config.toml
 telemt_config_volume: "telemt-config"
 # Name of the running telemt container
 telemt_container_name: "telemt"
@@ -106,21 +106,21 @@ telemt_cap_drop:
 # Capabilities added back (NET_BIND_SERVICE allows binding ports <1024 as non-root)
 telemt_cap_add:
   - "NET_BIND_SERVICE"
-# Run the container root filesystem as read-only
+# Run the container root filesystem as read-only; telemt keeps all writable
+# state (config, cache, tlsfront) in the config volume, so no /tmp tmpfs is
+# needed (and a tmpfs dict breaks podman_container's idempotency diff)
 telemt_read_only: true
-# Tmpfs mounts to write temporary files in a read-only root filesystem
-telemt_tmpfs:
-  - "/tmp:rw,nosuid,nodev,noexec,size=16m"
 # CPU (0.50 = half a core) and memory limits for the container, optional
 telemt_resource_limits_cpus: "0.50"
 telemt_resource_limits_memory: "256M"
 # Reserved memory guarantee for the container, optional
 telemt_resource_reservations_memory: "128M"
-# File descriptor soft/hard limits, critical for high-load servers
+# File descriptor soft/hard limits, critical for high-load servers;
+# podman expects the name=SOFT:HARD format (docker used name:SOFT:HARD)
 telemt_ulimits:
-  - "nofile:65536:65536"
-# Logging driver and options
+  - "nofile=65536:65536"
+# Logging driver and options; podman_container's log_opt sub-spec supports
+# only max_size, path and tag (no max-file rotation count as in docker)
 telemt_log_driver: "json-file"
 telemt_log_options:
-  max-size: "10m"
-  max-file: "3"
+  max_size: "10m"

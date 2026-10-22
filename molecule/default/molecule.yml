@@ -6,19 +6,32 @@ lint: |
   yamllint .
   ansible-lint .
 driver:
-  name: docker
+  name: podman
 platforms:
   - name: instance
-    image: "${MOLECULE_DISTR:-kirillzak/docker-alpine-ansible}:${MOLECULE_TAG:-latest}"  # yamllint disable-line rule:line-length
-    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    # Prebuilt distro image; the instance only needs to stay alive because the
+    # podman connection execs commands directly (no init/sshd required)
+    image: "${MOLECULE_DISTR:-kirillzak/docker-alpine-ansible}:${MOLECULE_TAG:-latest}"
+    command:
+      - sh
+      - -c
+      - while true; do sleep 10000; done
+    # Mount the host podman socket so the role manages host-engine containers
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    privileged: true
+      - ${MOLECULE_PODMAN_SOCKET:-/run/podman/podman.sock}:${MOLECULE_PODMAN_SOCKET:-/run/podman/podman.sock}:ro
+    env:
+      # The unified podman client (>= 4.0) selects the engine through
+      # CONTAINER_HOST; the legacy PODMAN_HOST variable is ignored
+      CONTAINER_HOST: unix://${MOLECULE_PODMAN_SOCKET:-/run/podman/podman.sock}
     pre_build_image: true
-    environment:
-      DOCKER_HOST: unix:///var/run/docker.sock
+    # Rootful by default (matches CI runners); override with
+    # MOLECULE_PODMAN_ROOTLESS=true for rootless setups
+    rootless: ${MOLECULE_PODMAN_ROOTLESS:-false}
 provisioner:
   name: ansible
+  env:
+    # RHEL-family and Fedora images ship a read-only /root; keep the remote
+    # tmp dir in world-writable /tmp so tempdir setup does not fail
+    ANSIBLE_REMOTE_TMP: /tmp/.ansible/tmp
 verifier:
   name: ansible

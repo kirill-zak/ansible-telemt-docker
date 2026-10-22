@@ -1,4 +1,10 @@
 ---
 collections:
-  - name: community.docker
+  # minimum version required by the molecule podman driver
+  - name: containers.podman
+    version: "==1.16.2"
+  # community.general provides the apk module used in molecule prepare
+  - name: community.general
+    version: "==9.5.2"
   - name: ansible.posix
+    version: "==1.6.2"

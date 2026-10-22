@@ -3,11 +3,14 @@ galaxy_info:
   author: kirill_zak
   role_name: ansible_telemt_docker
   description: >-
-    Deploy the TelemT MTProto proxy for Telegram as a hardened Docker container
+    Deploy the TelemT MTProto proxy for Telegram as a hardened Podman container
   company: https://kirill-zak.ru
   license: MIT
   min_ansible_version: '2.12'
   platforms:
+    - name: Alpine
+      versions:
+       - all
     - name: Debian
       versions:
         - buster
@@ -25,7 +28,7 @@ galaxy_info:
         - focal
         - jammy
   galaxy_tags:
-    - docker
+    - podman
     - proxy
 
 dependencies: []
