@@ -1,10 +1,11 @@
 ---
+# No become: the instance container runs as root by default, and a sudo
+# wrapper would strip CONTAINER_HOST from the module environment, forcing
+# the podman CLI into local (non-remote) mode
 - name: Verify
   hosts: all
-  become: true
 
   tasks:
-    # --- Rendered configuration file ---
     - name: Get rendered telemt config facts
       ansible.builtin.stat:
         path: /etc/telemt/telemt.toml
@@ -34,32 +35,32 @@
           - "'[server]' in telemt_config_text"
           - "'port = 443' in telemt_config_text"
           - "'[access.users]' in telemt_config_text"
+          - "'molecule-test' in telemt_config_text"
         fail_msg: Rendered config lacks expected [server]/port/access sections
       when: telemt_config_stat.stat.exists
 
-    # --- Docker resources ---
-    - name: Get telemt config docker volume info
-      community.docker.docker_volume_info:
+    - name: Get telemt config podman volume info
+      containers.podman.podman_volume_info:
         name: telemt-config
       register: telemt_volume_info
 
-    - name: Assert telemt config docker volume exists
+    - name: Assert telemt config podman volume exists
       ansible.builtin.assert:
         that:
-          - telemt_volume_info.exists
-        fail_msg: Docker volume 'telemt-config' was not created
+          - telemt_volume_info.volumes | length > 0
+        fail_msg: Podman volume 'telemt-config' was not created
 
-    - name: Get telemt docker container info
-      community.docker.docker_container_info:
+    - name: Get telemt podman container info
+      containers.podman.podman_container_info:
         name: telemt
       register: telemt_container_info
 
-    - name: Assert telemt docker container is running
+    - name: Assert telemt podman container is running and stable
       ansible.builtin.assert:
         that:
-          - telemt_container_info.exists
-          - telemt_container_info.container is defined
-          - telemt_container_info.container.State is defined
-          - telemt_container_info.container.State.Running is defined
-          - telemt_container_info.container.State.Running
-        fail_msg: Docker container 'telemt' is missing or not running
+          - telemt_container_info.containers | length > 0
+          - telemt_container_info.containers[0].State.Running
+          # RestartCount > 1 means the container crash-loops (e.g. the config
+          # in the volume is invalid); a clean startup restarts at most once
+          - telemt_container_info.containers[0].RestartCount | default(0) | int <= 1
+        fail_msg: Podman container 'telemt' is missing, not running, or crash-looping

@@ -1,0 +1,390 @@
+---
+name: CI Core
+
+'on':
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  ANSIBLE_FORCE_COLOR: '1'
+  PY_COLORS: '1'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run linter
+        run: |
+          yamllint .
+          ansible-lint .
+
+  test-almalinux:
+    name: Molecule test - AlmaLinux 9.x
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['9.0', '9.1', '9.2']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-almalinux-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-alpine-3-22:
+    name: Molecule test - Alpine Linux 3.22.x
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['3.22.0', '3.22.1', '3.22.2', '3.22.3', '3.22.4']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-alpine-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-alpine-3-23:
+    name: Molecule test - Alpine Linux 3.23.x
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['3.23.0', '3.23.2', '3.23.3', '3.23.4']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-alpine-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-debian:
+    name: Molecule test - Debian
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['12']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-debian-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-fedora:
+    name: Molecule test - Fedora Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['41', '42']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-fedora-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-rockylinux:
+    name: Molecule test - Rocky Linux 9.x
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['9.0', '9.1', '9.2']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-rockylinux-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}
+
+  test-ubuntu:
+    name: Molecule test - Ubuntu
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        tag: ['22.04', '24.04']
+
+    steps:
+      - name: Checkout the codebase
+        uses: actions/checkout@v4.4.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Cache ansible collections
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.ansible/collections
+          key: ansible-collections-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
+          restore-keys: |
+            ansible-collections-${{ runner.os }}-
+
+      - name: Ensure Podman is available
+        run: |
+          if ! command -v podman >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+          sudo systemctl start podman.socket
+
+      - name: Install ansible dependencies
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run Molecule tests
+        run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
+        env:
+          MOLECULE_DISTR: kirillzak/docker-ubuntu-ansible
+          MOLECULE_TAG: ${{ matrix.tag }}

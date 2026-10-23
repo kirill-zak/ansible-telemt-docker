@@ -1,17 +1,20 @@
 # ansible_telemt_docker
 
 An Ansible role that deploys the [TelemT](https://github.com/telemt/telemt) MTProto
-proxy for Telegram as a Docker container with a production-hardened configuration.
+proxy for Telegram as a Podman container with a production-hardened configuration.
 
 The role renders a `telemt.toml` configuration file, stores it in a dedicated
-Docker volume, and runs the TelemT container against it. When the rendered
+Podman volume, and runs the TelemT container against it. When the rendered
 config changes, the role copies the new file into the volume and recreates the
 container automatically.
 
 ## Requirements
 
-- A target host with a running Docker engine.
-- The `community.docker` and `ansible.posix` collections (see `requirements.yml`).
+- A target host with a running Podman engine (the `podman` CLI; the default
+  rootful socket is `/run/podman/podman.sock` — for non-default socket paths
+  point the CLI at it with the `CONTAINER_HOST` environment variable or a
+  podman connection).
+- The `containers.podman` and `ansible.posix` collections (see `requirements.yml`).
 
 ## Role Variables
 
@@ -90,13 +93,13 @@ overridden per host/group or passed as role parameters.
 |---|---|---|---|
 | `telemt_config_path` | string | `"/etc/telemt/telemt.toml"` | Path to the rendered configuration file on the target host. |
 
-### Docker Container
+### Podman Container
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `telemt_image` | string | `"whn0thacked/telemt-docker"` | TelemT Docker image. |
+| `telemt_image` | string | `"whn0thacked/telemt-docker"` | TelemT container image. |
 | `telemt_image_version` | string | `"latest"` | Image tag/version. |
-| `telemt_config_volume` | string | `"telemt-config"` | Docker volume persisting the generated config. |
+| `telemt_config_volume` | string | `"telemt-config"` | Podman volume persisting the generated config. |
 | `telemt_container_name` | string | `"telemt"` | Name of the running container. |
 | `telemt_container_restart_policy` | string | `"unless-stopped"` | Container restart policy. |
 | `telemt_container_config_path` | string | `"/etc/telemt/telemt.toml"` | Config path inside the container. |
@@ -107,18 +110,51 @@ overridden per host/group or passed as role parameters.
 | `telemt_security_opts` | list | `["no-new-privileges:true"]` | Extra security options. |
 | `telemt_cap_drop` | list | `["ALL"]` | Capabilities dropped from the container. |
 | `telemt_cap_add` | list | `["NET_BIND_SERVICE"]` | Capabilities added back. |
-| `telemt_read_only` | bool | `true` | Run the container root filesystem read-only. |
-| `telemt_tmpfs` | list | `["/tmp:rw,nosuid,nodev,noexec,size=16m"]` | tmpfs mounts for a read-only root FS. |
+| `telemt_read_only` | bool | `true` | Run the container root filesystem read-only (all writable state lives in the config volume). |
 | `telemt_resource_limits_cpus` | string | `"0.50"` | CPU limit (0.50 = half a core). |
 | `telemt_resource_limits_memory` | string | `"256M"` | Memory limit. |
 | `telemt_resource_reservations_memory` | string | `"128M"` | Reserved memory guarantee. |
-| `telemt_ulimits` | list | `["nofile:65536:65536"]` | File descriptor soft/hard limits. |
+| `telemt_ulimits` | list | `["nofile=65536:65536"]` | File descriptor soft/hard limits (`name=SOFT:HARD`). |
 | `telemt_log_driver` | string | `"json-file"` | Logging driver. |
-| `telemt_log_options` | dict | `{max-size: "10m", max-file: "3"}` | Logging driver options. |
+| `telemt_log_options` | dict | `{max_size: "10m"}` | Logging driver options (`max_size`, `path`, `tag`). |
+
+## Generating Access User Secrets
+
+Each entry in `telemt_access_users` maps a `username` to a secret of exactly
+32 hex characters (16 random bytes, 128 bits of entropy). Telemt embeds the
+secret into the generated client link (`https://username:secret@host/`), so
+it is effectively the user's password: generate one fresh value per user and
+keep the values in an encrypted variable (e.g. Ansible Vault) instead of
+committing them to version control.
+
+The role defines no users by default, and telemt refuses to start with an
+empty `[access.users]` section, so at least one user is required.
+
+Generate a secret:
+
+```bash
+# OpenSSL (Linux/macOS)
+openssl rand -hex 16
+
+# Python
+python3 -c "import secrets; print(secrets.token_hex(16))"
+```
+
+Example:
+
+```yaml
+telemt_access_users:
+  alice: "5f2c9d8a7b6e41f0a3d2c1b0e9f8a7d6"
+  bob: "c0ffee00011122233344455566677788"
+```
+
+Changing a user's secret (or `telemt_tls_domain`) invalidates links
+previously generated for that user. Per-user advertising tags in
+`telemt_access_user_ad_tags` use the same 32-hex format.
 
 ## Dependencies
 
-- `community.docker` collection
+- `containers.podman` collection
 - `ansible.posix` collection
 
 ## Example Playbook

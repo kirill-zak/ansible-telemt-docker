@@ -2,4 +2,4 @@
 - name: Test ansible_telemt_docker role
   hosts: localhost
   roles:
-    - ansible_telemt_docker
+    - telemt-docker

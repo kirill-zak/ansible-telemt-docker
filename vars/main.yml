@@ -1,1 +1,26 @@
 ---
+telemt_container_spec:
+  name: "{{ telemt_container_name }}"
+  image: "{{ telemt_image }}:{{ telemt_image_version }}"
+  state: started
+  restart_policy: "{{ telemt_container_restart_policy }}"
+  command: "{{ telemt_container_command }}"
+  # podman_container expects a string choice (unlike docker_container bool)
+  pull: always
+  volume:
+    - "{{ telemt_config_volume }}:/etc/telemt"
+  publish: "{{ telemt_published_ports if telemt_network_mode != 'host' else omit }}"
+  network: "{{ telemt_network_mode }}"
+  env:
+    RUST_LOG: "{{ telemt_log_level }}"
+  user: "{{ telemt_container_user if telemt_container_user else omit }}"
+  security_opt: "{{ telemt_security_opts }}"
+  cap_drop: "{{ telemt_cap_drop }}"
+  cap_add: "{{ telemt_cap_add }}"
+  read_only: "{{ telemt_read_only }}"
+  cpus: "{{ telemt_resource_limits_cpus if telemt_resource_limits_cpus else omit }}"
+  memory: "{{ telemt_resource_limits_memory if telemt_resource_limits_memory else omit }}"
+  memory_reservation: "{{ telemt_resource_reservations_memory if telemt_resource_reservations_memory else omit }}"
+  ulimit: "{{ telemt_ulimits }}"
+  log_driver: "{{ telemt_log_driver }}"
+  log_opt: "{{ telemt_log_options }}"

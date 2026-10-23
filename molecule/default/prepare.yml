@@ -1,20 +1,32 @@
 ---
+# No become: the instance container runs as root by default, and a sudo
+# wrapper would strip CONTAINER_HOST from the module environment, forcing
+# the podman CLI into local (non-remote) mode
 - name: Prepare
   hosts: all
-  become: true
   tasks:
-    - name: Install docker CLI and pip in the instance
+    # The containers.podman modules shell out to the podman CLI, which reaches
+    # the host podman engine through the socket mounted in molecule.yml
+    # (CONTAINER_HOST is set in the platform env). Only the CLI is required.
+
+    - name: Install podman CLI (Alpine)
       community.general.apk:
-        name:
-          - docker-cli
-          - py3-pip
+        name: podman
         state: present
         update_cache: true
+      when: ansible_os_family == 'Alpine'
 
-    - name: Install Python libraries required by community.docker modules
-      ansible.builtin.pip:
-        name:
-          - requests
-          - docker
+    - name: Install podman CLI (Debian)
+      ansible.builtin.apt:
+        name: podman
         state: present
-        break_system_packages: true
+        update_cache: true
+      when: ansible_os_family == 'Debian'
+
+    # state: latest — GA-era EL9 images may ship podman 3.4, whose client
+    # predates the unified remote client; the mirrors carry 4.x
+    - name: Install podman CLI (RedHat)  # noqa package-latest
+      ansible.builtin.dnf:
+        name: podman
+        state: latest
+      when: ansible_os_family == 'RedHat'
