@@ -1,8 +1,11 @@
 ---
 collections:
-  # minimum version required by the molecule podman driver
+  # >= 1.19 required: earlier releases shipped a podman_container
+  # diffparam_healthcheck that crashed with KeyError when podman inspect
+  # serializes an unset Healthcheck as an empty dict (>= 1.8.1 satisfies the
+  # molecule podman driver)
   - name: containers.podman
-    version: "==1.16.2"
+    version: "==1.19.2"
   # community.general provides the apk module used in molecule prepare
   - name: community.general
     version: "==9.5.2"
