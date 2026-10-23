@@ -29,6 +29,14 @@ platforms:
     rootless: ${MOLECULE_PODMAN_ROOTLESS:-false}
 provisioner:
   name: ansible
+  connection_options:
+    # rootful (root) `podman mount` returns a usable-looking but non-live
+    # /var/lib/containers/storage/overlay/<id>/merged path; the podman
+    # connection plugin then writes ansible modules there via the host fs and
+    # fails with FileNotFoundError because the tmp dir exists only inside the
+    # running container. Setting a remote_user makes the plugin always use
+    # `podman cp`, which is reliable regardless of the mount state.
+    ansible_user: root
   env:
     # RHEL-family and Fedora images ship a read-only /root; keep the remote
     # tmp dir in world-writable /tmp so tempdir setup does not fail
