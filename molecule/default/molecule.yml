@@ -9,16 +9,18 @@ driver:
   name: podman
 platforms:
   - name: instance
-    # Prebuilt distro image; the instance only needs to stay alive because the
-    # podman connection execs commands directly (no init/sshd required)
+    # Prebuilt distro image booted with its native init (systemd/openrc), so
+    # the kirill_zak.ansible_podman role manages the podman service exactly as
+    # it does on a real host; the podman connection execs commands directly.
+    # override_command: false keeps the image's init as PID 1 — molecule would
+    # otherwise substitute a plain `bash -c sleep` loop and the init never runs
+    override_command: false
     image: "${MOLECULE_DISTR:-kirillzak/docker-alpine-ansible}:${MOLECULE_TAG:-latest}"
-    command:
-      - sh
-      - -c
-      - while true; do sleep 10000; done
-    # Mount the host podman socket so the role manages host-engine containers
+    # Mount the host podman socket so the role manages host-engine containers,
+    # plus the cgroup filesystem the distro init requires inside the container
     volumes:
       - ${MOLECULE_PODMAN_SOCKET:-/run/podman/podman.sock}:${MOLECULE_PODMAN_SOCKET:-/run/podman/podman.sock}:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     env:
       # The unified podman client (>= 4.0) selects the engine through
       # CONTAINER_HOST; the legacy PODMAN_HOST variable is ignored

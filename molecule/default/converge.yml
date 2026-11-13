@@ -13,8 +13,9 @@
       molecule-test: "0123456789abcdef0123456789abcdef"
 
   tasks:
-    # The podman driver execs commands into a long-running sleep container,
-    # so no init/service wait is needed before converge.
+    # The instance boots its native init (see molecule.yml), so no service
+    # wait is needed here; converge runs the role under test which manages the
+    # host-engine telemt container through the mounted podman socket.
     - name: "Include kirill_zak.ansible_telemt_docker"
       ansible.builtin.include_role:
         name: "kirill_zak.ansible_telemt_docker"

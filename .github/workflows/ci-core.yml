@@ -39,7 +39,7 @@ jobs:
             ansible-collections-${{ runner.os }}-
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run linter
         run: |
@@ -87,7 +87,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -136,7 +136,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -185,7 +185,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -234,7 +234,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -283,7 +283,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -332,7 +332,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test
@@ -381,7 +381,7 @@ jobs:
           sudo systemctl start podman.socket
 
       - name: Install ansible dependencies
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy install -r requirements.yml
 
       - name: Run Molecule tests
         run: sudo -E env "PATH=$PATH" "HOME=$HOME" molecule test

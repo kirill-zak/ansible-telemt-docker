@@ -97,7 +97,7 @@ overridden per host/group or passed as role parameters.
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `telemt_image` | string | `"whn0thacked/telemt-docker"` | TelemT container image. |
+| `telemt_image` | string | `"docker.io/whn0thacked/telemt-docker"` | TelemT container image (fully qualified). |
 | `telemt_image_version` | string | `"latest"` | Image tag/version. |
 | `telemt_config_volume` | string | `"telemt-config"` | Podman volume persisting the generated config. |
 | `telemt_container_name` | string | `"telemt"` | Name of the running container. |

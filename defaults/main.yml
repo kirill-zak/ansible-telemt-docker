@@ -75,8 +75,10 @@ telemt_tls_front_dir: "tlsfront"
 telemt_config_path: "/etc/telemt/telemt.toml"
 
 # === Podman container settings ===
-# Image and tag of the telemt container image; version/tag is user-overridable
-telemt_image: "whn0thacked/telemt-docker"
+# Image and tag of the telemt container image; version/tag is user-overridable.
+# Fully qualified so short-name resolution (which requires unqualified-search
+# registries in registries.conf) is never needed, even on minimal podman setups.
+telemt_image: "docker.io/whn0thacked/telemt-docker"
 # Image version/tag, defaults to latest
 telemt_image_version: "latest"
 # Name of the Podman volume that persists the generated config.toml
