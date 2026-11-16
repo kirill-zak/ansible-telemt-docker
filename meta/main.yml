@@ -7,26 +7,26 @@ galaxy_info:
   company: https://kirill-zak.ru
   license: MIT
   min_ansible_version: '2.12'
+  # The role only manages a target engine through the unified podman client
+  # (>= 4.0, CONTAINER_HOST); older 3.x clients are not supported. Platform
+  # versions mirror the CI test matrix.
   platforms:
     - name: Alpine
       versions:
         - all
     - name: Debian
       versions:
-        - buster
-        - bullseye
+        - bookworm
     - name: EL
       versions:
-        - "8"
+        - "9"
     - name: Fedora
       versions:
-        - "35"
-        - "36"
+        - "41"
+        - "42"
     - name: Ubuntu
       versions:
-        - bionic
-        - focal
-        - jammy
+        - noble
   galaxy_tags:
     - podman
     - proxy

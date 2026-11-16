@@ -14,6 +14,9 @@ container automatically.
   rootful socket is `/run/podman/podman.sock` — for non-default socket paths
   point the CLI at it with the `CONTAINER_HOST` environment variable or a
   podman connection).
+- The target's `podman` CLI must be a unified client (4.0 or newer): older 3.x
+  clients ignore `CONTAINER_HOST` and would manage a local engine instead of
+  the target one, so they are not supported.
 - The `containers.podman` and `ansible.posix` collections (see `requirements.yml`).
 
 ## Role Variables
