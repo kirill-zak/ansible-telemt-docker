@@ -1,11 +1,10 @@
 ---
-# Create a Docker volume to persist the telemt configuration file
-- name: Create telemt config docker volume
-  community.docker.docker_volume:
+# Create a Podman volume to persist the telemt configuration file
+- name: Create telemt config podman volume
+  containers.podman.podman_volume:
     name: "{{ telemt_config_volume }}"
     state: present
 
-# Render the telemt.toml template and notify the handler to reload telemt
 - name: Ensure telemt config directory exists
   ansible.builtin.file:
     path: "{{ telemt_config_path | dirname }}"
@@ -17,34 +16,36 @@
     src: telemt.toml.j2
     dest: "{{ telemt_config_path }}"
     mode: "0644"
-  notify: Reload telemt config
+  register: telemt_config_template
 
-# Run the telemt container using the config docker volume.
+# Run the telemt container using the config podman volume.
 # The volume holds the generated config, mounted writable at /etc/telemt so the
 # API can save configuration changes (atomic writes require directory access).
-- name: Run telemt docker container
-  community.docker.docker_container:
-    name: "{{ telemt_container_name }}"
-    image: "{{ telemt_image }}:{{ telemt_image_version }}"
-    state: started
-    restart_policy: "{{ telemt_container_restart_policy }}"
-    command: "{{ telemt_container_command }}"
-    pull: true
-    volumes:
-      - "{{ telemt_config_volume }}:/etc/telemt"
-    ports: "{{ telemt_published_ports if telemt_network_mode != 'host' else omit }}"
-    network_mode: "{{ telemt_network_mode }}"
-    env:
-      RUST_LOG: "{{ telemt_log_level }}"
-    user: "{{ telemt_container_user if telemt_container_user else omit }}"
-    security_opts: "{{ telemt_security_opts }}"
-    cap_drop: "{{ telemt_cap_drop }}"
-    capabilities: "{{ telemt_cap_add }}"
-    read_only: "{{ telemt_read_only }}"
-    tmpfs: "{{ telemt_tmpfs }}"
-    cpus: "{{ telemt_resource_limits_cpus if telemt_resource_limits_cpus else omit }}"
-    memory: "{{ telemt_resource_limits_memory if telemt_resource_limits_memory else omit }}"
-    memory_reservation: "{{ telemt_resource_reservations_memory if telemt_resource_reservations_memory else omit }}"
-    ulimits: "{{ telemt_ulimits }}"
-    log_driver: "{{ telemt_log_driver }}"
-    log_options: "{{ telemt_log_options }}"
+# The parameter set lives in vars/main.yml (telemt_container_spec) so the run
+# task and the recreate task below share one container definition.
+# noqa args[module]: all parameters live in telemt_container_spec (vars/main.yml)
+- name: Run telemt podman container  # noqa args[module]
+  containers.podman.podman_container: "{{ telemt_container_spec }}"
+
+# When the rendered config changed, copy it into the volume and recreate the
+# container so telemt reads the new file. The CLI reads the file from the role
+# host (a molecule instance in tests, the target machine in production) and
+# streams it into the container's volume mount, so no host-path bind on the
+# engine is needed (a helper container binding the file would fail in
+# molecule, where the rendered path does not exist on the engine host).
+# noqa no-handler: on purpose inline, the copy must run in the role's task
+# order right before the recreate, not at the end of the play
+- name: Copy rendered config into telemt config volume  # noqa no-handler
+  ansible.builtin.command:
+    cmd: >-
+      podman cp
+      {{ telemt_config_path }}
+      {{ telemt_container_name }}:{{ telemt_container_config_path }}
+  changed_when: true
+  when: telemt_config_template is changed
+
+# noqa no-handler: on purpose inline, must follow the config copy in the
+# role's task order; noqa args[module]: parameters live in the shared spec
+- name: Recreate telemt podman container  # noqa no-handler args[module]
+  containers.podman.podman_container: "{{ telemt_container_spec | combine({'recreate': true}) }}"
+  when: telemt_config_template is changed

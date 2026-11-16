@@ -1,0 +1,22 @@
+---
+extends: default
+
+ignore: |
+  .ansible
+  .omo
+  tests/roles
+
+rules:
+  line-length:
+    max: 160
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  # Rules below keep the config compatible with ansible-lint's yaml rule
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

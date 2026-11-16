@@ -1,4 +1,22 @@
 ---
+roles:
+  # Installs the podman CLI the distro-appropriate way (apk/apt/dnf/yum),
+  # used in molecule prepare. Pinned to the released v2.0.0: it installs
+  # podman with the dnf4 backend on Fedora 41+ (the test images ship no
+  # python3-libdnf5 bindings) and manages the podman service state itself.
+  - name: kirill_zak.ansible_podman
+    src: https://github.com/kirill-zak/ansible-podman.git
+    version: v2.0.0
 collections:
-  - name: community.docker
+  # >= 1.19 required: earlier releases shipped a podman_container
+  # diffparam_healthcheck that crashed with KeyError when podman inspect
+  # serializes an unset Healthcheck as an empty dict (>= 1.8.1 satisfies the
+  # molecule podman driver)
+  - name: containers.podman
+    version: "==1.19.2"
+  # community.general provides the apk module used by the role's Alpine
+  # install tasks during molecule prepare
+  - name: community.general
+    version: "==9.5.2"
   - name: ansible.posix
+    version: "==1.6.2"
